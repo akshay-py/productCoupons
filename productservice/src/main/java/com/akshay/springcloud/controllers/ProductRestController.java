@@ -10,6 +10,7 @@ import com.akshay.springcloud.dto.Coupon;
 import com.akshay.springcloud.model.Product;
 import com.akshay.springcloud.repos.ProductRepo;
 import com.akshay.springcloud.restclients.CouponClient;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 
 @RestController
 @RequestMapping("/productapi")
@@ -20,10 +21,14 @@ public class ProductRestController {
 	CouponClient couponClient;
 
 	@RequestMapping(value = "/products", method = RequestMethod.POST)
+	@HystrixCommand(fallbackMethod = "sendErrorResponse")
 	public Product create(@RequestBody Product product) {
 		Coupon coupon = couponClient.getCoupon(product.getCouponCode());
 		product.setPrice(product.getPrice().subtract(coupon.getDiscount()));
 		return productRepo.save(product);
 	}
 
+	public Product sendErrorResponse(Product product) {
+		return product;
+	}
 }
